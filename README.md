@@ -4,7 +4,7 @@ Exam project for **System on Chip** (M.Sc. Electronic Engineering, University of
 
 A Zynq-7000 SoC (ZedBoard, XC7Z020) programs a **TI LMX2820** wideband PLL over SPI. Two push-buttons on the board load two complete register configurations (2 GHz and 4 GHz output); LEDs confirm the configuration, and the result is verified on the bench with an oscilloscope (SPI bus) and a spectrum analyser (PLL output).
 
-> **Note on IP.** The SPI master in the programmable logic is a proprietary AXI4-Lite IP core provided by the company where I work. Its HDL and documentation are **not** part of this repository and are treated here as a black box. Everything published here is my own work.
+> **Note on IP.** In the original version, the SPI master in the programmable logic is a third-party AXI4-Lite IP core. Its HDL and documentation are **not** part of this repository and are treated here as a black box. Replacing it with my own SPI master is the next milestone (see [Roadmap](#roadmap)). Everything published here is my own work.
 
 ## Architecture
 
@@ -17,7 +17,7 @@ A Zynq-7000 SoC (ZedBoard, XC7Z020) programs a **TI LMX2820** wideband PLL over 
  │                                       │              │ ───▶ │ CSB  SCK  │
  │  PL: Artix-7 fabric                   ▼              │ PMOD │ SDI       │
  │    ├─ AXI GPIO → LD0/LD1                             │  JA  │ MUXOUT ◀──│
- │    └─ AXI4-Lite SPI master (proprietary, not incl.) ─┼───── └───────────┘
+ │    └─ AXI4-Lite SPI master (third-party, not incl.) ─┼───── └───────────┘
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -39,6 +39,21 @@ A Zynq-7000 SoC (ZedBoard, XC7Z020) programs a **TI LMX2820** wideband PLL over 
 2. **Vitis**: platform + BSP from the `.xsa`, standalone (no OS) application.
 3. **Validation**: SPI waveforms (SCK = 12.5 MHz, SDI, CSB) measured on the PMOD pins with an oscilloscope; 2 GHz / 4 GHz carrier checked with a spectrum analyser.
 
+## Roadmap
+
+The goal is to turn the exam project into a self-contained, reusable clock-generation platform for high-speed data converters.
+
+- [ ] **Own SPI master**: AXI4-Lite SPI master in SystemVerilog (configurable clock divider, CPOL/CPHA, 24-bit frames, read-back), replacing the third-party core
+- [ ] **RTL verification**: cocotb + Verilator testbench with an LMX2820 SPI slave model, run in CI
+- [ ] **PLL driver in C**: parse TICS Pro register exports, program the LMX2820 over SPI, read registers back and check lock status through MUXOUT
+- [ ] **UART command shell**: switch frequency and inspect registers at runtime instead of fixed push-button configurations
+- [ ] **Host-side unit tests**: driver and parser tested on the PC with a mocked SPI layer
+- [ ] **JESD204C clocking**: use the LMX2820 SYSREF outputs to build a JESD204C-compliant clocking scheme for multi-channel ADC/UDC boards, with deterministic-latency and multi-device synchronization checks
+
 ## Skills
 
 Zynq-7000 SoC · Vivado block design · AXI4-Lite · SPI · PLL / RF synthesizers · bare-metal C (Vitis) · XDC constraints · lab validation (oscilloscope, spectrum analyser)
+
+## License
+
+[MIT](LICENSE) © 2026 Ferdinando Catania
